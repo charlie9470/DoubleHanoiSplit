@@ -1,5 +1,6 @@
 #include<iostream>
 #include<vector>
+#include<deque>
 #include<queue>
 #include<map>
 using namespace std;
@@ -9,6 +10,7 @@ class Node
     vector<vector<char>> pegs;
     string State;
     vector<Node*> Neighbors;
+    vector<Node*> Predecessors;
     int dist;
     Node(int SIZE){//initiates a initial state
         pegs.resize(3);
@@ -78,87 +80,165 @@ class Graph
     void Generate();
     void printGraph();
     map<string,Node*> M;
+    deque<string> path;
     Node* Start;
+    int numberUnique = 0;
     int BFS(Node* start);
+    void printPath(Node* end);
 };
+
+void Graph::printPath(Node* end){
+	path.push_front(end->State);
+	for(auto i:end->Predecessors)
+	{
+		printPath(i);
+	}
+	if(end==Start){
+		numberUnique++;
+		for(int i = 0;i<path.size();i++)
+		{
+			if(i==path.size()-1) cout << path[i] << endl;
+			else cout << path[i] << " to ";
+		}
+	}
+	path.pop_front();
+}
 
 void Graph::Generate()
 {
     queue<Node*> Q;
     Q.push(Start);
+    M.insert(pair<string,Node*>(Start->State,Start));
     while(!Q.empty())
     {
         Node* tmp = Q.front();
         Q.pop();
-        if(M.find(tmp->State) == M.end())
+
+        string key = tmp->State;
+        for(int i = 0;i<2;i++)
         {
-            string key = tmp->State;
-            M.insert(pair<string,Node*>(key,tmp));
-            for(int i = 0;i<2;i++)
+            for(int j = i+1;j<3;j++)
             {
-                for(int j = i+1;j<3;j++)
+                if(tmp->pegs[i].size() == 0 && tmp->pegs[j].size() == 0)// peg i,j are empty
                 {
-                    if(tmp->pegs[i].size() == 0 && tmp->pegs[j].size() == 0)// peg i,j are empty
-                    {
-                        continue;
-                    }
-                    else if(tmp->pegs[i].size() != 0 && tmp->pegs[j].size() == 0)// peg j is empty
+                    continue;
+                }
+                else if(tmp->pegs[i].size() != 0 && tmp->pegs[j].size() == 0)// peg j is empty
+                {
+                    vector<vector<char>> X = tmp->pegs;
+                    X[j].push_back(X[i].back());
+                    X[i].pop_back();
+                    Node* pushed = new Node(X,tmp->dist+1);
+		    if(M.find(pushed->State) == M.end())
+		    {
+		        Q.push(pushed);
+			M.insert(pair<string,Node*>(pushed->State, pushed));
+                        tmp->Neighbors.push_back(pushed);
+			pushed->Predecessors.push_back(tmp);
+		    }
+		    else
+		    {
+                        tmp->Neighbors.push_back(pushed);
+			if(M.find(pushed->State)->second->dist == (tmp->dist+1)) M.find(pushed->State)->second->Predecessors.push_back(tmp);
+		    }
+                }
+                else if(tmp->pegs[i].size() == 0 && tmp->pegs[j].size() != 0)// peg i is empty
+                {
+                    vector<vector<char>> X = tmp->pegs;
+                    X[i].push_back(X[j].back());
+                    X[j].pop_back();
+                    Node* pushed = new Node(X,tmp->dist+1);
+		    if(M.find(pushed->State) == M.end())
+		    {
+		        Q.push(pushed);
+			M.insert(pair<string,Node*>(pushed->State, pushed));
+                        tmp->Neighbors.push_back(pushed);
+			pushed->Predecessors.push_back(tmp);
+		    }
+		    else
+		    {
+                        tmp->Neighbors.push_back(pushed);
+			if(M.find(pushed->State)->second->dist == (tmp->dist+1)) M.find(pushed->State)->second->Predecessors.push_back(tmp);
+		    }
+                }
+                else if(abs(tmp->pegs[i].back() - tmp->pegs[j].back()) == 32)// peg i and j have disks of same size
+                {
+//                    cout << "Same size disks: " << abs(tmp->pegs[i].back() - tmp->pegs[j].back()) << endl;
+                    vector<vector<char>> X = tmp->pegs;
+                    X[j].push_back(X[i].back());
+                    X[i].pop_back();
+                    Node* pushed = new Node(X,tmp->dist+1);
+		    if(M.find(pushed->State) == M.end())
+		    {
+		        Q.push(pushed);
+			M.insert(pair<string,Node*>(pushed->State, pushed));
+                        tmp->Neighbors.push_back(pushed);
+			pushed->Predecessors.push_back(tmp);
+		    }
+		    else
+		    {
+                        tmp->Neighbors.push_back(pushed);
+			if(M.find(pushed->State)->second->dist == (tmp->dist+1)) M.find(pushed->State)->second->Predecessors.push_back(tmp);
+		    }
+
+                    vector<vector<char>> Y = tmp->pegs;
+                    Y[i].push_back(Y[j].back());
+                    Y[j].pop_back();
+                    Node* pushed_Y = new Node(Y,tmp->dist+1);
+		    if(M.find(pushed_Y->State) == M.end())
+		    {
+		        Q.push(pushed_Y);
+			M.insert(pair<string,Node*>(pushed_Y->State, pushed_Y));
+                        tmp->Neighbors.push_back(pushed_Y);
+			pushed_Y->Predecessors.push_back(tmp);
+		    }
+		    else
+		    {
+                        tmp->Neighbors.push_back(pushed_Y);
+			if(M.find(pushed_Y->State)->second->dist == (tmp->dist+1)) M.find(pushed_Y->State)->second->Predecessors.push_back(tmp);
+		    }
+                }
+                else {
+                    int f = tmp->pegs[i].back()>=97?tmp->pegs[i].back()-97:tmp->pegs[i].back()-65;
+                    int s = tmp->pegs[j].back()>=97?tmp->pegs[j].back()-97:tmp->pegs[j].back()-65;
+//                    cout << "f: " << f << ", s: " << s << endl;
+                    if(f>s)
                     {
                         vector<vector<char>> X = tmp->pegs;
                         X[j].push_back(X[i].back());
                         X[i].pop_back();
                         Node* pushed = new Node(X,tmp->dist+1);
-                        Q.push(pushed);
-                        tmp->Neighbors.push_back(pushed);
+		        if(M.find(pushed->State) == M.end())
+		        {
+		            Q.push(pushed);
+		   	    M.insert(pair<string,Node*>(pushed->State, pushed));
+                            tmp->Neighbors.push_back(pushed);
+			    pushed->Predecessors.push_back(tmp);
+		        }
+		        else
+		        {
+                            tmp->Neighbors.push_back(pushed);
+			if(M.find(pushed->State)->second->dist == (tmp->dist+1)) M.find(pushed->State)->second->Predecessors.push_back(tmp);
+		        }
                     }
-                    else if(tmp->pegs[i].size() == 0 && tmp->pegs[j].size() != 0)// peg i is empty
+                    else
                     {
                         vector<vector<char>> X = tmp->pegs;
                         X[i].push_back(X[j].back());
                         X[j].pop_back();
                         Node* pushed = new Node(X,tmp->dist+1);
-                        Q.push(pushed);
-                        tmp->Neighbors.push_back(pushed);
-                    }
-                    else if(abs(tmp->pegs[i].back() - tmp->pegs[j].back()) == 32)// peg i and j have disks of same size
-                    {
-//                        cout << "Same size disks: " << abs(tmp->pegs[i].back() - tmp->pegs[j].back()) << endl;
-                        vector<vector<char>> X = tmp->pegs;
-                        X[j].push_back(X[i].back());
-                        X[i].pop_back();
-                        Node* pushed = new Node(X,tmp->dist+1);
-                        Q.push(pushed);
-                        tmp->Neighbors.push_back(pushed);
-
-                        vector<vector<char>> Y = tmp->pegs;
-                        Y[i].push_back(Y[j].back());
-                        Y[j].pop_back();
-                        Node* pushed_Y = new Node(Y,tmp->dist+1);
-                        Q.push(pushed_Y);
-                        tmp->Neighbors.push_back(pushed_Y);
-                    }
-                    else {
-                        int f = tmp->pegs[i].back()>=97?tmp->pegs[i].back()-97:tmp->pegs[i].back()-65;
-                        int s = tmp->pegs[j].back()>=97?tmp->pegs[j].back()-97:tmp->pegs[j].back()-65;
-//                        cout << "f: " << f << ", s: " << s << endl;
-                        if(f>s)
-                        {
-                            vector<vector<char>> X = tmp->pegs;
-                            X[j].push_back(X[i].back());
-                            X[i].pop_back();
-                            Node* pushed = new Node(X,tmp->dist+1);
-                            Q.push(pushed);
+		        if(M.find(pushed->State) == M.end())
+		        {
+		            Q.push(pushed);
+			    M.insert(pair<string,Node*>(pushed->State, pushed));
                             tmp->Neighbors.push_back(pushed);
-                        }
-                        else
-                        {
-                            vector<vector<char>> X = tmp->pegs;
-                            X[i].push_back(X[j].back());
-                            X[j].pop_back();
-                            Node* pushed = new Node(X,tmp->dist+1);
-                            Q.push(pushed);
+			    pushed->Predecessors.push_back(tmp);
+		        }
+		        else
+		        {
                             tmp->Neighbors.push_back(pushed);
-                        }
+			if(M.find(pushed->State)->second->dist == (tmp->dist+1)) M.find(pushed->State)->second->Predecessors.push_back(tmp);
+		        }
                     }
                 }
             }
@@ -175,6 +255,12 @@ void Graph::printGraph()
         i.second->printState();
         cout << endl << "Dist : " << i.second->dist << endl << "Neighbors : ";
         for(auto j:i.second->Neighbors)
+        {
+            j->printState();
+            cout << ", ";
+        }cout << endl;
+        cout << "Predecessors: ";
+        for(auto j:i.second->Predecessors)
         {
             j->printState();
             cout << ", ";
@@ -196,9 +282,21 @@ int main(){
 //    G->printGraph();
     Node* tmp = G->M.find(U->State)->second;
     cout << "U" << tmp->State <<": " << tmp->dist << endl;
+    cout << "Path(s): " << endl;
+    G->printPath(tmp);
+    cout << "Number of unique paths: " << G->numberUnique << endl;
+    G->numberUnique = 0;
     tmp = G->M.find(D->State)->second;
     cout << "D" << tmp->State <<": " << tmp->dist << endl;
+    cout << "Path(s): " << endl;
+    G->printPath(tmp);
+    cout << "Number of unique paths: " << G->numberUnique << endl;
+    G->numberUnique = 0;
     tmp = G->M.find(S->State)->second;
     cout << "S" << tmp->State <<": " << tmp->dist << endl;
+    cout << "Path(s): " << endl;
+    G->printPath(tmp);
+    cout << "Number of unique paths: " << G->numberUnique << endl;
+    G->numberUnique = 0;
     return 0;
 }
