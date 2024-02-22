@@ -221,6 +221,6 @@ int main(){
     // G->printGraph();
     Node* tmp = G->M.find(t->State)->second;
     cout << "Dist: " << tmp->dist << endl;
-//    G->printPath(tmp);
+    G->printPath(tmp);
     return 0;
 }
