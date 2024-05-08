@@ -7,7 +7,7 @@ using namespace std;
 class Node
 {
     public:
-    vector<vector<int>> pegs;
+    vector<vector<int> > pegs;
     string State;
     vector<Node*> Neighbors;
     vector<Node*> Predecessors;
@@ -33,7 +33,18 @@ class Node
         this->makeState();
         dist = 0;
     };
-    Node(vector<vector<int>> state,int Dist){//initiates a state as mentioned
+    Node(int SIZE,char state, string customize){//initiates with customized state
+        pegs.resize(3);
+        if(state!='c') return;
+        State = customize;
+        int cur = 0;
+        for(int i = 0;i<customize.length();i++){
+            if(customize[i] == '<'||customize[i] == '>') continue;
+            else if(customize[i] == '|') cur++;
+            else pegs[cur].push_back((customize[i]-'0'));
+        }
+    }
+    Node(vector<vector<int> > state,int Dist){//initiates a state as mentioned
         pegs = state;
         dist = Dist;
         this->makeState();
@@ -56,7 +67,11 @@ class Node
     }
     void printState(){
         cout << State;
-    }
+/*        for(auto i:pegs){
+            for(auto j:i) cout << j;
+            cout << "|";
+        }cout << endl;
+*/    }
 };
 class Graph
 {
@@ -110,7 +125,7 @@ void Graph::Generate()
                 }
                 else if(tmp->pegs[i].size() != 0 && tmp->pegs[j].size() == 0)// peg j is empty
                 {
-                    vector<vector<int>> X = tmp->pegs;
+                    vector<vector<int> > X = tmp->pegs;
                     X[j].push_back(X[i].back());
                     X[i].pop_back();
                     Node* pushed = new Node(X,tmp->dist+1);
@@ -129,7 +144,7 @@ void Graph::Generate()
                 }
                 else if(tmp->pegs[i].size() == 0 && tmp->pegs[j].size() != 0)// peg i is empty
                 {
-                    vector<vector<int>> X = tmp->pegs;
+                    vector<vector<int> > X = tmp->pegs;
                     X[i].push_back(X[j].back());
                     X[j].pop_back();
                     Node* pushed = new Node(X,tmp->dist+1);
@@ -148,7 +163,7 @@ void Graph::Generate()
                 }
                 else
                 {
-                    vector<vector<int>> X = tmp->pegs;
+                    vector<vector<int> > X = tmp->pegs;
                     X[j].push_back(X[i].back());
                     X[i].pop_back();
                     Node* pushed = new Node(X,tmp->dist+1);
@@ -164,7 +179,7 @@ void Graph::Generate()
                         tmp->Neighbors.push_back(pushed);
                         if(M.find(pushed->State)->second->dist == (tmp->dist+1)) M.find(pushed->State)->second->Predecessors.push_back(tmp);
                     }
-                    vector<vector<int>> Y = tmp->pegs;
+                    vector<vector<int> > Y = tmp->pegs;
                     Y[i].push_back(Y[j].back());
                     Y[j].pop_back();
                     Node* pushed_y = new Node(Y,tmp->dist+1);
@@ -210,17 +225,35 @@ void Graph::printGraph()
 }
 int main(){
     int SIZE;
+    char type;
     cout << "Please input size of graph: ";
     cin >> SIZE;
-    Node* s = new Node(SIZE,'s');
-    Node* t = new Node(SIZE,'t');
-//    s->printState();
+    cout << "Please input the type of input:\nc for customized, s for standard\n";
+    cin >> type;
+    Node* s;
+    Node* t;
+    if(type == 's'){
+        s = new Node(SIZE,'s');
+        t = new Node(SIZE,'t');
+    }
+    else if(type == 'c'){
+        string ttmp;
+        cout << "Please input the starting state" << endl;
+        cin >> ttmp;
+        s = new Node(SIZE,'c', ttmp);
+        cout << "Please input the target state" << endl;
+        cin >> ttmp;
+        t = new Node(SIZE,'c', ttmp);
+        s->printState();
+        t->printState();
+    }
+    s->printState();
     Graph* G = new Graph(s);
     G->Generate();
     cout << "G Size: " << G->M.size() << endl;
     // G->printGraph();
     Node* tmp = G->M.find(t->State)->second;
     cout << "Dist: " << tmp->dist << endl;
-//    G->printPath(tmp);
+    G->printPath(tmp);
     return 0;
 }
