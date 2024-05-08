@@ -3,6 +3,9 @@
 #include<deque>
 #include<queue>
 #include<map>
+#include<set>
+#include<iostream>
+#include<fstream>
 using namespace std;
 class Node
 {
@@ -73,12 +76,29 @@ class Node
         }cout << endl;
 */    }
 };
+class Edge
+{
+public:
+    int x = -1;
+    int y = -1;
+    Edge(int x, int y): x(x), y(y){}
+
+    bool operator<(const Edge& other) const {
+        return (x==other.x)?(y<other.y):(x < other.x);
+    }
+
+};
+
 class Graph
 {
     public:
     Graph(Node* Start):Start(Start){};
     void Generate();
     void printGraph();
+    void printinGraphForm();
+    int GetNodeId(Node*);
+    map<Node*,int> V;
+    set<Edge> E;
     map<string,Node*> M;
     deque<string> path;
     Node* Start;
@@ -86,6 +106,15 @@ class Graph
     int BFS(Node* start);
     void printPath(Node* end);
 };
+
+int Graph::GetNodeId(Node* N){
+    if(V.find(N)==V.end()){
+        cout << "Error!!!" << endl;
+        cout << "Cannot find Node: " << N->State << endl;
+        return -1;
+    }
+    return V.find(N)->second;
+}
 
 void Graph::printPath(Node* end){
 	path.push_front(end->State);
@@ -112,6 +141,7 @@ void Graph::Generate()
     while(!Q.empty())
     {
         Node* tmp = Q.front();
+        V.insert(pair<Node*,int>(tmp,V.size()+1));
         Q.pop();
 
         string key = tmp->State;
@@ -138,6 +168,7 @@ void Graph::Generate()
                         }
                     else
                         {
+                            pushed = M.find(pushed->State)->second;
                             tmp->Neighbors.push_back(pushed);
                             if(M.find(pushed->State)->second->dist == (tmp->dist+1)) M.find(pushed->State)->second->Predecessors.push_back(tmp);
                         }
@@ -157,6 +188,7 @@ void Graph::Generate()
                     }
                     else
                     {
+                        pushed = M.find(pushed->State)->second;
                         tmp->Neighbors.push_back(pushed);
                         if(M.find(pushed->State)->second->dist == (tmp->dist+1)) M.find(pushed->State)->second->Predecessors.push_back(tmp);
                     }
@@ -176,6 +208,7 @@ void Graph::Generate()
                     }
                     else
                     {
+                        pushed = M.find(pushed->State)->second;
                         tmp->Neighbors.push_back(pushed);
                         if(M.find(pushed->State)->second->dist == (tmp->dist+1)) M.find(pushed->State)->second->Predecessors.push_back(tmp);
                     }
@@ -192,6 +225,7 @@ void Graph::Generate()
                     }
                     else
                     {
+                        pushed_y = M.find(pushed_y->State)->second;
                         tmp->Neighbors.push_back(pushed_y);
                         if(M.find(pushed_y->State)->second->dist == (tmp->dist+1)) M.find(pushed_y->State)->second->Predecessors.push_back(tmp);
                     }
@@ -223,6 +257,57 @@ void Graph::printGraph()
     }
     cout << "Graph printed" << endl;
 }
+
+void Graph::printinGraphForm(){
+    ofstream outputFile;
+    outputFile.open("3_output.txt");
+
+    if (!outputFile.is_open()) {
+        std::cerr << "Error opening file." << std::endl;
+        return ; // Return error code
+    }
+
+    // Write data to the file
+//    outputFile << "Hello, World!" << std::endl;
+//    outputFile << "This is a line written to the file." << std::endl;
+
+    for (auto it = V.begin(); it != V.end(); ++it) {
+        Node* cur = it->first;
+        for(auto j:cur->Neighbors){
+            int small = (GetNodeId(cur)>GetNodeId(j))?GetNodeId(j):GetNodeId(cur);
+            int big = (GetNodeId(cur)>GetNodeId(j))?GetNodeId(cur):GetNodeId(j);
+            Edge etmp = Edge(small,big);
+            E.insert(etmp);
+        }
+    }
+
+    for (auto it = V.begin(); it != V.end(); ++it) {
+        outputFile << GetNodeId(it->first) << /*" " << it->first->State <<*/ endl;
+    }
+    for (auto i = E.begin(); i != E.end(); ++i) {
+        outputFile << i->x << " " << i->y /*<< " 1"*/ << endl;
+    }
+
+    // Close the file
+    outputFile.close();
+    outputFile.open("Accordance.txt");
+
+    if (!outputFile.is_open()) {
+        std::cerr << "Error opening file." << std::endl;
+        return ; // Return error code
+    }
+
+    for(int i = 1;i<=V.size();i++){
+        for(auto j = V.begin(); j != V.end(); ++j){
+            if(GetNodeId(j->first)==i){
+                outputFile << i << ": " << j->first->State << endl;
+                break;
+            }
+        }
+    }
+    outputFile.close();
+}
+
 int main(){
     int SIZE;
     char type;
@@ -252,6 +337,7 @@ int main(){
     G->Generate();
     cout << "G Size: " << G->M.size() << endl;
     // G->printGraph();
+//    G->printinGraphForm();
     Node* tmp = G->M.find(t->State)->second;
     cout << "Dist: " << tmp->dist << endl;
     G->printPath(tmp);
