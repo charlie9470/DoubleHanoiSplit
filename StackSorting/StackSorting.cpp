@@ -6,6 +6,10 @@
 #include<set>
 #include<iostream>
 #include<fstream>
+#include<algorithm>
+#include <ctime>
+#include <cstdlib>
+
 using namespace std;
 class Node
 {
@@ -32,19 +36,58 @@ class Node
                 //Target is go to State <54321|-|->
             }
             break;
+            default:
+            break;
         }
         this->makeState();
         dist = 0;
     };
-    Node(int SIZE,char state, string customize){//initiates with customized state
+    Node(int SIZE,char state, string customize){//initiates with customized/random state
         pegs.resize(3);
-        if(state!='c') return;
-        State = customize;
-        int cur = 0;
-        for(int i = 0;i<customize.length();i++){
-            if(customize[i] == '<'||customize[i] == '>') continue;
-            else if(customize[i] == '|') cur++;
-            else pegs[cur].push_back((customize[i]-'0'));
+        if(state!='c'&&state!='r') return;
+        if(state == 'c'){
+            State = customize;
+            int cur = 0;
+            for(int i = 0;i<customize.length();i++){
+                if(customize[i] == '<'||customize[i] == '>') continue;
+                else if(customize[i] == '|') cur++;
+                else pegs[cur].push_back((customize[i]-'0'));
+            }
+        }
+        else if(state == 'r'){
+            vector<int> X(SIZE);
+            for(int i = 0;i<SIZE;i++){
+                X[i] = i+1;
+            }
+            random_shuffle(X.begin(),X.end());
+            cout << "Shuffled: ";
+            for(auto i:X) cout << i;
+            cout << endl;
+            string S = "<";
+            if(customize == "F"){
+                for(int i = 0;i<X.size();i++){
+                    S += (X[i] + '0');
+                }
+                S += "||>";
+            }
+            else if(customize == "NF"){
+                S+="|";
+                int number = rand()%SIZE+1;
+                for(int i = 0;i<X.size();i++){
+                    S+= (X[i] + '0');
+                    if(i==number) S+="|";
+                }
+                if(number==X.size()) S+="|";
+                S+=">";
+            }
+            cout << "S: " << S << endl;
+            State = S;
+            int cur = 0;
+            for(int i = 0;i<State.length();i++){
+                if(State[i] == '<'||State[i] == '>') continue;
+                else if(State[i] == '|') cur++;
+                else pegs[cur].push_back((S[i]-'0'));
+            }
         }
     }
     Node(vector<vector<int> > state,int Dist){//initiates a state as mentioned
@@ -105,6 +148,8 @@ class Graph
     int numberUnique = 0;
     int BFS(Node* start);
     void printPath(Node* end);
+    void outputPathRecursive(Node* end,string output);
+    void outputPath(Node* end,string fileName);
 };
 
 int Graph::GetNodeId(Node* N){
@@ -131,6 +176,41 @@ void Graph::printPath(Node* end){
 		}
 	}
 	path.pop_front();
+}
+
+void Graph::outputPathRecursive(Node* end, string output){
+	path.push_front(end->State);
+	for(auto i:end->Predecessors)
+	{
+		outputPathRecursive(i, output);
+	}
+	if(end==Start){
+		numberUnique++;
+		for(int i = 0;i<path.size();i++)
+		{
+			if(i==path.size()-1) output+=(path[i]+"\n");
+			else output += (path[i] + " to ");
+		}
+	}
+	path.pop_front();
+}
+
+void Graph::outputPath(Node* end, string fileName){
+    ofstream outputFile;
+    outputFile.open(fileName, std::ios::app);
+
+    outputFile << "Test , for debugging" << endl;//Open failed
+
+    if (!outputFile.is_open()) {
+        std::cerr << "Error opening file." << std::endl;
+        return ; // Return error code
+    }
+
+    string output;
+    outputPathRecursive(end, output);
+
+    outputFile << output << endl;
+
 }
 
 void Graph::Generate()
@@ -309,11 +389,12 @@ void Graph::printinGraphForm(){
 }
 
 int main(){
+    srand(static_cast<unsigned int>(std::time(nullptr)));
     int SIZE;
     char type;
     cout << "Please input size of graph: ";
     cin >> SIZE;
-    cout << "Please input the type of input:\nc for customized, s for standard\n";
+    cout << "Please input the type of input:\nc for customized, s for standard, r for random\n";
     cin >> type;
     Node* s;
     Node* t;
@@ -329,10 +410,28 @@ int main(){
         cout << "Please input the target state" << endl;
         cin >> ttmp;
         t = new Node(SIZE,'c', ttmp);
-        s->printState();
-        t->printState();
+//        s->printState();
+//        t->printState();
     }
-    s->printState();
+    else if(type == 'r'){//Random start/target
+    for(int i = 0;i<1;i++){
+        s = new Node(SIZE, 'r', "F");
+        t = new Node(SIZE, 'r', "NF");
+        cout << "s: ";
+        s->printState();
+        cout << "\nt: ";
+        t->printState();
+        cout << endl;
+        Graph* G = new Graph(s);
+        G->Generate();
+        cout << "G size: " << G->M.size() << endl;
+        Node* tmp = G->M.find(t->State)->second;
+        G->printPath(tmp);
+        G->outputPath(tmp, "random_test.txt");
+    }
+    }
+    /*
+//    s->printState();
     Graph* G = new Graph(s);
     G->Generate();
     cout << "G Size: " << G->M.size() << endl;
@@ -341,5 +440,6 @@ int main(){
     Node* tmp = G->M.find(t->State)->second;
     cout << "Dist: " << tmp->dist << endl;
     G->printPath(tmp);
+    */
     return 0;
 }
