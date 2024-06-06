@@ -104,7 +104,7 @@ class Graph
     Node* Start;
     int numberUnique = 0;
     int BFS(Node* start);
-    void printPath(Node* end);
+    void printPath(ofstream& out, Node* end);
 };
 
 int Graph::GetNodeId(Node* N){
@@ -116,18 +116,18 @@ int Graph::GetNodeId(Node* N){
     return V.find(N)->second;
 }
 
-void Graph::printPath(Node* end){
+void Graph::printPath(ofstream& out, Node* end){
 	path.push_front(end->State);
 	for(auto i:end->Predecessors)
 	{
-		printPath(i);
+		printPath(out, i);
 	}
 	if(end==Start){
 		numberUnique++;
 		for(int i = 0;i<path.size();i++)
 		{
-			if(i==path.size()-1) cout << path[i] << endl;
-			else cout << path[i] << " to ";
+			if(i==path.size()-1) out << path[i] << endl;
+			else out << path[i] << " to ";
 		}
 	}
 	path.pop_front();
@@ -310,10 +310,13 @@ void Graph::printinGraphForm(){
 
 int main(){
     int SIZE;
+    int samples;
     char type;
+    ofstream out;
+    out.open("out_7.txt");
     cout << "Please input size of graph: ";
     cin >> SIZE;
-    cout << "Please input the type of input:\nc for customized, s for standard\n";
+    cout << "Please input the type of input:\nc for customized, s for standard, m for multiple samples with same source.\n";
     cin >> type;
     Node* s;
     Node* t;
@@ -332,14 +335,32 @@ int main(){
         s->printState();
         t->printState();
     }
-    s->printState();
+    else if (type == 'm'){
+        cout << "Please input number of samples: ";
+        cin >> samples;
+        s = new Node(SIZE,'t');
+    }
     Graph* G = new Graph(s);
     G->Generate();
     cout << "G Size: " << G->M.size() << endl;
+    if(type=='m'){
+        while(samples--){
+            string target;
+            cin >> target;
+            Node* tmp = G->M.find(target)->second;
+            out << "Dist: " << tmp->dist << endl;
+            G->printPath(out, tmp);
+        }
+    }
+    else{
+        Node* tmp = G->M.find(t->State)->second;
+        out << "Dist: " << tmp->dist << endl;
+        G->printPath(out, tmp);
+    }
+    /*
+    s->printState();
     // G->printGraph();
 //    G->printinGraphForm();
-    Node* tmp = G->M.find(t->State)->second;
-    cout << "Dist: " << tmp->dist << endl;
-    G->printPath(tmp);
+    */
     return 0;
 }
