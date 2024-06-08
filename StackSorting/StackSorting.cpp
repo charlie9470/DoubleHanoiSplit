@@ -147,9 +147,12 @@ class Graph
     Node* Start;
     int numberUnique = 0;
     int BFS(Node* start);
+
     void printPath(Node* end);
     void outputPathRecursive(Node* end,string output);
     void outputPath(Node* end,string fileName);
+
+    void printPath(ofstream& out, Node* end);
 };
 
 int Graph::GetNodeId(Node* N){
@@ -161,18 +164,18 @@ int Graph::GetNodeId(Node* N){
     return V.find(N)->second;
 }
 
-void Graph::printPath(Node* end){
+void Graph::printPath(ofstream& out, Node* end){
 	path.push_front(end->State);
 	for(auto i:end->Predecessors)
 	{
-		printPath(i);
+		printPath(out, i);
 	}
 	if(end==Start){
 		numberUnique++;
 		for(int i = 0;i<path.size();i++)
 		{
-			if(i==path.size()-1) cout << path[i] << endl;
-			else cout << path[i] << " to ";
+			if(i==path.size()-1) out << path[i] << endl;
+			else out << path[i] << " to ";
 		}
 	}
 	path.pop_front();
@@ -391,10 +394,15 @@ void Graph::printinGraphForm(){
 int main(){
     srand(static_cast<unsigned int>(std::time(nullptr)));
     int SIZE;
+    int samples;
     char type;
+    ofstream out;
+    out.open("out_7.txt");
     cout << "Please input size of graph: ";
     cin >> SIZE;
-    cout << "Please input the type of input:\nc for customized, s for standard, r for random\n";
+
+    cout << "Please input the type of input:\nc for customized, s for standard, m for multiple samples with same source.\n";
+
     cin >> type;
     Node* s;
     Node* t;
@@ -435,16 +443,5 @@ int main(){
         G->outputPath(tmp, "random_test.txt");
     }
     }
-    /*
-//    s->printState();
-    Graph* G = new Graph(s);
-    G->Generate();
-    cout << "G Size: " << G->M.size() << endl;
-    // G->printGraph();
-//    G->printinGraphForm();
-    Node* tmp = G->M.find(t->State)->second;
-    cout << "Dist: " << tmp->dist << endl;
-    G->printPath(tmp);
-    */
     return 0;
 }
