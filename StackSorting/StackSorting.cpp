@@ -147,11 +147,8 @@ class Graph
     Node* Start;
     int numberUnique = 0;
     int BFS(Node* start);
-
-    void printPath(Node* end);
     void outputPathRecursive(Node* end,string output);
     void outputPath(Node* end,string fileName);
-
     void printPath(ofstream& out, Node* end);
 };
 
@@ -400,9 +397,7 @@ int main(){
     out.open("out_7.txt");
     cout << "Please input size of graph: ";
     cin >> SIZE;
-
     cout << "Please input the type of input:\nc for customized, s for standard, m for multiple samples with same source.\n";
-
     cin >> type;
     Node* s;
     Node* t;
@@ -418,11 +413,6 @@ int main(){
         cout << "Please input the target state" << endl;
         cin >> ttmp;
         t = new Node(SIZE,'c', ttmp);
-        Graph* G = new Graph(s);
-        G->Generate();
-        cout << "G size: " << G->M.size() << endl;
-        Node* tmp = G->M.find(t->State)->second;
-        G->printPath(tmp);
 //        s->printState();
 //        t->printState();
     }
@@ -435,13 +425,34 @@ int main(){
         cout << "\nt: ";
         t->printState();
         cout << endl;
-        Graph* G = new Graph(s);
-        G->Generate();
-        cout << "G size: " << G->M.size() << endl;
+    }
+    }
+    else if (type == 'm'){
+        cout << "Please input number of samples: ";
+        cin >> samples;
+        s = new Node(SIZE,'t');
+    }
+    Graph* G = new Graph(s);
+    G->Generate();
+    cout << "G Size: " << G->M.size() << endl;
+    if(type=='m'){
+        while(samples--){
+            string target;
+            cin >> target;
+            Node* tmp = G->M.find(target)->second;
+            out << "Dist: " << tmp->dist << endl;
+            G->printPath(out, tmp);
+        }
+    }
+    else{
         Node* tmp = G->M.find(t->State)->second;
-        G->printPath(tmp);
-        G->outputPath(tmp, "random_test.txt");
+        out << "Dist: " << tmp->dist << endl;
+        G->printPath(out, tmp);
     }
-    }
+    /*
+    s->printState();
+    // G->printGraph();
+//    G->printinGraphForm();
+    */
     return 0;
 }
