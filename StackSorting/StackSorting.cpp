@@ -410,6 +410,11 @@ int main(){
         cout << "Please input the target state" << endl;
         cin >> ttmp;
         t = new Node(SIZE,'c', ttmp);
+        Graph* G = new Graph(s);
+        G->Generate();
+        cout << "G size: " << G->M.size() << endl;
+        Node* tmp = G->M.find(t->State)->second;
+        G->printPath(tmp);
 //        s->printState();
 //        t->printState();
     }
