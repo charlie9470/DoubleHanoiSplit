@@ -147,7 +147,6 @@ class Graph
     Node* Start;
     int numberUnique = 0;
     int BFS(Node* start);
-    void printPath(Node* end);
     void outputPathRecursive(Node* end,string output);
     void outputPath(Node* end,string fileName);
     void printPath(ofstream& out, Node* end);
@@ -414,11 +413,6 @@ int main(){
         cout << "Please input the target state" << endl;
         cin >> ttmp;
         t = new Node(SIZE,'c', ttmp);
-        Graph* G = new Graph(s);
-        G->Generate();
-        cout << "G size: " << G->M.size() << endl;
-        Node* tmp = G->M.find(t->State)->second;
-        G->printPath(tmp);
 //        s->printState();
 //        t->printState();
     }
@@ -431,12 +425,6 @@ int main(){
         cout << "\nt: ";
         t->printState();
         cout << endl;
-        Graph* G = new Graph(s);
-        G->Generate();
-        cout << "G size: " << G->M.size() << endl;
-        Node* tmp = G->M.find(t->State)->second;
-        G->printPath(tmp);
-        G->outputPath(tmp, "random_test.txt");
     }
     }
     else if (type == 'm'){
