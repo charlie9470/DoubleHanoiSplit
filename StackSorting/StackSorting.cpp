@@ -150,6 +150,8 @@ class Graph
     void outputPathRecursive(Node* end,string output);
     void outputPath(Node* end,string fileName);
     void printPath(ofstream& out, Node* end);
+    void Permute(ofstream& outputFile, string& target, int index);
+    void swap(string& target,int i,int j);
 };
 
 int Graph::GetNodeId(Node* N){
@@ -244,13 +246,13 @@ void Graph::Generate()
                             Q.push(pushed);
                             M.insert(pair<string,Node*>(pushed->State, pushed));
                             tmp->Neighbors.push_back(pushed);
-                            pushed->Predecessors.push_back(tmp);
+//                            pushed->Predecessors.push_back(tmp);
                         }
                     else
                         {
                             pushed = M.find(pushed->State)->second;
                             tmp->Neighbors.push_back(pushed);
-                            if(M.find(pushed->State)->second->dist == (tmp->dist+1)) M.find(pushed->State)->second->Predecessors.push_back(tmp);
+//                            if(M.find(pushed->State)->second->dist == (tmp->dist+1)) M.find(pushed->State)->second->Predecessors.push_back(tmp);
                         }
                 }
                 else if(tmp->pegs[i].size() == 0 && tmp->pegs[j].size() != 0)// peg i is empty
@@ -388,13 +390,38 @@ void Graph::printinGraphForm(){
     outputFile.close();
 }
 
+void Graph::swap(string& target,int i,int j){
+	char tmp = target[i];
+	target[i] = target[j];
+	target[j] = tmp;
+	return;
+}
+
+void Graph::Permute(ofstream& outputFile, string& target, int index){
+	int n = target.length();
+	if(index==n){
+        string X = "<|" + target + "|>";
+        Node* tmp = this->M.find(X)->second;
+        outputFile << "Dist: " << tmp->dist << endl;
+//        this->printPath(outputFile, tmp);
+	}
+	for(int i = index;i<n;i++){
+			swap(target,index,i);
+			this->Permute(outputFile, target, index+1);
+			swap(target,index,i);
+	}
+};
+
+
 int main(){
     srand(static_cast<unsigned int>(std::time(nullptr)));
     int SIZE;
-    int samples;
     char type;
+    string name;
     ofstream out;
-    out.open("out_7.txt");
+    cout << "Please input testcase name: ";
+    cin >> name;
+    out.open("testcases/" + name);
     cout << "Please input size of graph: ";
     cin >> SIZE;
     cout << "Please input the type of input:\nc for customized, s for standard, m for multiple samples with same source.\n";
@@ -413,36 +440,30 @@ int main(){
         cout << "Please input the target state" << endl;
         cin >> ttmp;
         t = new Node(SIZE,'c', ttmp);
-//        s->printState();
-//        t->printState();
     }
-    else if(type == 'r'){//Random start/target
-    for(int i = 0;i<1;i++){
-        s = new Node(SIZE, 'r', "F");
-        t = new Node(SIZE, 'r', "NF");
-        cout << "s: ";
-        s->printState();
-        cout << "\nt: ";
-        t->printState();
-        cout << endl;
-    }
+    else if(type == 'r'){
+        for(int i = 0;i<1;i++){
+            s = new Node(SIZE, 'r', "F");
+            t = new Node(SIZE, 'r', "NF");
+            cout << "s: ";
+            s->printState();
+            cout << "\nt: ";
+            t->printState();
+            cout << endl;
+        }
     }
     else if (type == 'm'){
-        cout << "Please input number of samples: ";
-        cin >> samples;
         s = new Node(SIZE,'t');
     }
     Graph* G = new Graph(s);
     G->Generate();
     cout << "G Size: " << G->M.size() << endl;
-    if(type=='m'){
-        while(samples--){
-            string target;
-            cin >> target;
-            Node* tmp = G->M.find(target)->second;
-            out << "Dist: " << tmp->dist << endl;
-            G->printPath(out, tmp);
+    if(type == 'm'){
+        string target = "";
+        for(int i = 0;i<SIZE;i++){
+            target+= i+'1';
         }
+        G->Permute(out, target, 0);
     }
     else{
         Node* tmp = G->M.find(t->State)->second;
