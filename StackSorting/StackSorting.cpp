@@ -9,6 +9,8 @@
 #include<algorithm>
 #include <ctime>
 #include <cstdlib>
+#include <thread>
+#include <chrono>
 
 using namespace std;
 class Node
@@ -24,16 +26,16 @@ class Node
         switch(state){
             case 's'://Start
             for(int i = 0;i<SIZE;i++){
-                pegs[0].push_back(i+1);
-                //Starts in Reversed State: <12345|-|->
-                //Target is go to State <54321|-|->
+                pegs[0].push_back(SIZE-i);
+                //Starts in State: <54321|-|->
+                //Target is go to State <12345|-|->
             }
             break;
             case 't'://Target
             for(int i = 0;i<SIZE;i++){
-                pegs[0].push_back(SIZE-i);
-                //Starts in Reversed State: <12345|-|->
-                //Target is go to State <54321|-|->
+                pegs[0].push_back(i+1);
+                //Starts in State: <54321|-|->
+                //Target is go to State <12345|-|->
             }
             break;
             default:
@@ -150,7 +152,7 @@ class Graph
     void outputPathRecursive(Node* end,string output);
     void outputPath(Node* end,string fileName);
     void printPath(ofstream& out, Node* end);
-    void Permute(ofstream& outputFile, string& target, int index);
+    void Permute(ofstream& outputFile, string& target, int index,bool Path);
     void swap(string& target,int i,int j);
 };
 
@@ -246,13 +248,13 @@ void Graph::Generate()
                             Q.push(pushed);
                             M.insert(pair<string,Node*>(pushed->State, pushed));
                             tmp->Neighbors.push_back(pushed);
-//                            pushed->Predecessors.push_back(tmp);
+                           pushed->Predecessors.push_back(tmp);
                         }
                     else
                         {
                             pushed = M.find(pushed->State)->second;
                             tmp->Neighbors.push_back(pushed);
-//                            if(M.find(pushed->State)->second->dist == (tmp->dist+1)) M.find(pushed->State)->second->Predecessors.push_back(tmp);
+                           if(M.find(pushed->State)->second->dist == (tmp->dist+1)) M.find(pushed->State)->second->Predecessors.push_back(tmp);
                         }
                 }
                 else if(tmp->pegs[i].size() == 0 && tmp->pegs[j].size() != 0)// peg i is empty
@@ -397,19 +399,15 @@ void Graph::swap(string& target,int i,int j){
 	return;
 }
 
-void Graph::Permute(ofstream& outputFile, string& target, int index){
-	int n = target.length();
-	if(index==n){
-        string X = "<|" + target + "|>";
+void Graph::Permute(ofstream& outputFile, string& target, int index,bool Path){
+    do
+    {
+        string X = "<" + target + "||>";
         Node* tmp = this->M.find(X)->second;
-        outputFile << "Dist: " << tmp->dist << endl;
-//        this->printPath(outputFile, tmp);
-	}
-	for(int i = index;i<n;i++){
-			swap(target,index,i);
-			this->Permute(outputFile, target, index+1);
-			swap(target,index,i);
-	}
+        outputFile << "State: " << X << ", Dist: " << tmp->dist << endl;
+        if(Path) this->printPath(outputFile, tmp);
+    }
+    while (std::next_permutation(target.begin(), target.end()));
 };
 
 
@@ -453,7 +451,7 @@ int main(){
         }
     }
     else if (type == 'm'){
-        s = new Node(SIZE,'t');
+        s = new Node(SIZE,'s');
     }
     Graph* G = new Graph(s);
     G->Generate();
@@ -463,12 +461,12 @@ int main(){
         for(int i = 0;i<SIZE;i++){
             target+= i+'1';
         }
-        G->Permute(out, target, 0);
+        G->Permute(out, target, 0, false);
     }
     else{
         Node* tmp = G->M.find(t->State)->second;
-        out << "Dist: " << tmp->dist << endl;
-        G->printPath(out, tmp);
+        out << "State: " << tmp->State << ", Dist: " << tmp->dist << endl;
+        //G->printPath(out, tmp);
     }
     /*
     s->printState();
